@@ -1,0 +1,37 @@
+PUBLICAR LIQUIDACIONES Y FONDOS EN https://liquidaciones.siderasrl.com.ar
+=========================================================================
+Va en el mismo servidor que la asistencia (179.43.120.17), con su propio subdominio,
+su propio servicio y su propia base. La asistencia no se toca.
+
+1) DNS (una sola vez)
+   En la zona DNS de siderasrl.com.ar agregar un registro:
+     Tipo A   ·   Nombre: liquidaciones   ·   Valor: 179.43.120.17
+   Comprobar desde la PC (cmd):  nslookup liquidaciones.siderasrl.com.ar  -> debe dar 179.43.120.17
+
+2) Instalar (y para cada actualización)
+   Entrar al servidor por SSH como root y correr:
+     cd /root && rm -rf liquidaciones-fondos
+     git clone https://github.com/nicolascorpo130-dotcom/liquidaciones-fondos.git
+     cd liquidaciones-fondos && bash servidor/instalar.sh
+   (git pide el usuario de GitHub y, como contraseña, un token de acceso con permiso de lectura.)
+   El script instala lo necesario, crea el servicio "liquidaciones", configura nginx y saca
+   el certificado HTTPS. Si se vuelve a correr, actualiza el código y no toca los datos.
+
+3) Pasar los datos que ya están cargados en la PC (una sola vez)
+   a. En la PC cerrar el sistema (ventana negra).
+   b. Copiar al servidor, en /root, el archivo datos.db y la carpeta comprobantes
+      (de Proyecto RRHH\Liquidaciones y Fondos), por ejemplo con WinSCP.
+   c. En el servidor:
+        systemctl stop liquidaciones
+        cp /root/datos.db /opt/liquidaciones/datos.db
+        cp -r /root/comprobantes/. /opt/liquidaciones/comprobantes/
+        chown -R liquidaciones:liquidaciones /opt/liquidaciones
+        systemctl start liquidaciones
+   Los usuarios y contraseñas que ya existan en la PC pasan igual.
+   Desde ese momento se usa solo la versión web: la de la PC deja de actualizarse.
+
+COMANDOS ÚTILES
+   Estado:        systemctl status liquidaciones
+   Ver errores:   journalctl -u liquidaciones -n 50
+   Reiniciar:     systemctl restart liquidaciones
+   Respaldo:      copiar /opt/liquidaciones/datos.db y /opt/liquidaciones/comprobantes

@@ -15,13 +15,14 @@ from flask import (Flask, abort, flash, g, redirect, render_template, request, s
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 import db
 
-VERSION = "1.2.0"
-PUERTO = 5002
+VERSION = "1.3.0"
+PUERTO = int(os.environ.get("LF_PORT", "5002"))
 EXTENSIONES = {".pdf", ".png", ".jpg", ".jpeg", ".webp"}
 
 db.init()
@@ -36,6 +37,11 @@ if not db.get_config("secret_key"):
 app = Flask(__name__)
 app.secret_key = db.get_config("secret_key")
 app.config.update(MAX_CONTENT_LENGTH=25 * 1024 * 1024, SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax")
+# En el servidor la app queda detrás de nginx con HTTPS: LF_HTTPS=1 hace que la cookie de sesión viaje
+# solo cifrada y que se respeten las cabeceras que manda nginx. (En la PC local no se define.)
+if os.environ.get("LF_HTTPS") == "1":
+    app.config.update(SESSION_COOKIE_SECURE=True, SESSION_COOKIE_NAME="liquidaciones_sesion")
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 
 # ---------------------------------------------------------------- usuarios / ingreso
@@ -571,4 +577,5 @@ def exportar():
 if __name__ == "__main__":
     if os.environ.get("LF_NO_BROWSER") != "1":
         threading.Timer(1.2, lambda: webbrowser.open(f"http://127.0.0.1:{PUERTO}")).start()
-    app.run(host="127.0.0.1", port=PUERTO, debug=False)
+    # En el servidor LF_HOST=127.0.0.1 (solo nginx llega a la app); en la PC local también es 127.0.0.1.
+    app.run(host=os.environ.get("LF_HOST", "127.0.0.1"), port=PUERTO, debug=False)
