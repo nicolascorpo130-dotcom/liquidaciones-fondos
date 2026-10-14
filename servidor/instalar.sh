@@ -27,6 +27,12 @@ mkdir -p "$DIR/comprobantes"
 if [ "$ORIGEN" != "$DIR" ]; then
   rsync -a --delete --exclude datos.db --exclude comprobantes/ --exclude .git/ --exclude venv/ \
         --exclude '*.xlsx' --exclude __pycache__/ "$ORIGEN"/ "$DIR"/
+  # Primera instalación desde el zip con datos: se copia la base solo si el servidor todavía no tiene una
+  if [ -f "$ORIGEN/datos.db" ] && [ ! -f "$DIR/datos.db" ]; then
+    echo "== Copiando la base de datos incluida (primera instalación)"
+    cp "$ORIGEN/datos.db" "$DIR/datos.db"
+    [ -d "$ORIGEN/comprobantes" ] && cp -r "$ORIGEN/comprobantes/." "$DIR/comprobantes/"
+  fi
 fi
 python3 -m venv "$DIR/venv"
 "$DIR/venv/bin/pip" install -q --upgrade pip

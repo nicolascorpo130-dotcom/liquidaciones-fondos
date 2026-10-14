@@ -8,6 +8,13 @@ su propio servicio y su propia base. La asistencia no se toca.
      Tipo A   ·   Nombre: liquidaciones   ·   Valor: 179.43.120.17
    Comprobar desde la PC (cmd):  nslookup liquidaciones.siderasrl.com.ar  -> debe dar 179.43.120.17
 
+OPCIÓN RÁPIDA CON EL ZIP (incluye la base de datos)
+   Subir liquidaciones-fondos-servidor-*.zip a /root del servidor (WinSCP o el panel) y correr:
+     cd /root && apt-get install -y unzip && unzip -o liquidaciones-fondos-servidor-*.zip
+     cd liquidaciones-fondos && bash servidor/instalar.sh
+   En la primera instalación la base y los comprobantes del zip quedan en /opt/liquidaciones.
+   Con el zip no hace falta el paso 3. Si el servidor ya tiene una base, el zip NO la reemplaza.
+
 2) Instalar (y para cada actualización)
    Entrar al servidor por SSH como root y correr:
      cd /root && rm -rf liquidaciones-fondos
