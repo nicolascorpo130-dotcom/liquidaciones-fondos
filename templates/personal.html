@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "_macros.html" import estado as est with context %}
+{% block cuerpo %}
+<h1>Personal</h1>
+<div class="card">
+  <h2>Registrar persona</h2>
+  {% include "_form_persona.html" %}
+</div>
+<div class="card">
+  <form class="fila" method="get" style="margin-bottom:12px">
+    <label>Buscar (nombre o CUIL)<input name="q" value="{{ q }}"></label><button>Buscar</button>
+    <span class="mut peq" style="margin-left:auto">{{ personas|length }} personas</span>
+  </form>
+  <div class="scroll"><table class="ajustar">
+    <tr><th>CUIL</th><th>Apellido y nombre</th><th>Fecha de baja</th><th>Obra</th><th>Telegrama</th><th>Estado total</th><th class="num">Se debe</th><th class="num">Pagado</th><th></th></tr>
+    {% for p in personas %}
+    <tr><td class="mut">{{ p.cuil or '' }}</td><td><a href="/personal/{{ p.id }}" target="_blank">{{ p.nombre }}</a></td><td>{{ p.fecha_baja|fecha }}</td>
+      <td>{{ p.obra or '' }}</td><td>{{ p.telegrama or '' }}</td><td>{{ est(p.estado_total) }}</td>
+      <td class="num">{{ p.deuda|pesos }}</td><td class="num">{{ p.pagado|pesos }}</td>
+      <td><a class="btn sec chico" href="/personal/{{ p.id }}" target="_blank">Ver / editar</a></td></tr>
+    {% endfor %}
+  </table></div>
+</div>
+{% endblock %}

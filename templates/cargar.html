@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block cuerpo %}
+<h1>Cargar aguinaldos y fondos</h1>
+<div class="card">
+  <h2>Nuevo concepto a deber</h2>
+  <form class="fila" method="post" action="/item/guardar">
+    <input type="hidden" name="next" value="{{ request.full_path }}">
+    <input type="hidden" name="estado" value="PENDIENTE">
+    <label style="min-width:300px">Persona
+      <select name="personal_id" required><option value="">Elegí…</option>
+        {% for p in personas %}<option value="{{ p.id }}" {{ 'selected' if persona==p.id|string }}>{{ p.nombre }}{% if p.cuil %} ({{ p.cuil }}){% endif %}</option>{% endfor %}
+      </select></label>
+    <label>Concepto<select name="tipo">{% for t, n in TIPOS %}<option value="{{ t }}" {{ 'selected' if (tipo or 'AGUINALDO')==t }}>{{ n }}</option>{% endfor %}</select></label>
+    <label>Período / detalle<input name="periodo" placeholder="ej. 1° SAC 2026"></label>
+    <label>Monto ($)<input name="monto" inputmode="decimal" placeholder="vacío si no se sabe"></label>
+    <label style="flex:1;min-width:180px">Notas<input name="notas"></label>
+    <button>Agregar</button>
+  </form>
+  <p class="mut peq" style="margin:10px 0 0">Queda como <b>no pagado</b>. El pago y el comprobante se registran en la pestaña <a href="/pagos">Pagos y comprobantes</a>.</p>
+</div>
+
+<div class="card">
+  <form class="fila" method="get" style="margin-bottom:12px">
+    <label>Concepto<select name="tipo"><option value="">Todos</option>{% for t, n in TIPOS %}<option value="{{ t }}" {{ 'selected' if tipo==t }}>{{ n }}</option>{% endfor %}</select></label>
+    <label>Persona<select name="persona"><option value="">Todas</option>{% for p in personas %}<option value="{{ p.id }}" {{ 'selected' if persona==p.id|string }}>{{ p.nombre }}</option>{% endfor %}</select></label>
+    <label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx)"><input type="checkbox" name="sin_monto" value="1" {{ 'checked' if sin_monto }}> Solo los que no tienen monto</label>
+    <button>Ver</button>
+    <span class="mut peq" style="margin-left:auto">{{ items|length }} conceptos{% if items|length == 400 %} (se muestran los últimos 400){% endif %}</span>
+  </form>
+  <div class="scroll"><table class="ajustar">
+    <tr><th>Persona</th><th>Obra</th><th>Concepto</th><th>Estado</th><th>Período / detalle</th><th>Monto ($)</th><th></th><th>Notas</th></tr>
+    {% for it in items %}
+    <tr>
+      <td><a href="/personal/{{ it.personal_id }}" target="_blank">{{ it.nombre }}</a></td>
+      <td class="mut">{{ it.obra or '' }}</td>
+      <td>{{ TIPOS_NOMBRE[it.tipo] }}</td>
+      <td><span class="tag t-{{ it.estado }}">{{ 'PAGADO' if it.estado=='PAGADO' else 'NO PAGADO' }}</span></td>
+      <td><input form="m{{ it.id }}" name="periodo" value="{{ it.periodo or '' }}"></td>
+      <td><input form="m{{ it.id }}" name="monto" value="{{ ('%.2f'|format(it.monto)).replace('.', ',') if it.monto is not none else '' }}" inputmode="decimal" placeholder="sin monto"></td>
+      <td><form id="m{{ it.id }}" method="post" action="/item/{{ it.id }}/monto"><input type="hidden" name="next" value="{{ request.full_path }}"><button class="chico">Guardar</button></form></td>
+      <td class="mut peq" style="white-space:normal;">{{ it.notas or '' }}</td>
+    </tr>
+    {% else %}<tr><td colspan="8" class="mut">No hay conceptos con ese filtro.</td></tr>{% endfor %}
+  </table></div>
+</div>
+{% endblock %}

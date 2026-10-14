@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block cuerpo %}
+<div class="solo-print" style="margin-bottom:10px">
+  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1f4e78;padding-bottom:6px;margin-bottom:8px">
+    <img src="{{ url_for('static', filename='logo_sidera.png') }}" alt="" style="height:34px">
+    <div style="text-align:right"><b>Reporte de deuda</b><br><span class="mut">Impreso el {{ ahora.strftime('%d/%m/%Y %H:%M') }}</span></div>
+  </div>
+  <div class="mut">Conceptos: {% for t in elegidos %}{{ TIPOS_NOMBRE[t] }}{{ ', ' if not loop.last }}{% endfor %}{% if obra %} · Obra: {{ obra }}{% endif %}</div>
+</div>
+
+<h1 class="no-print">Reporte de deuda</h1>
+<div class="card no-print">
+  <form method="get" class="fila">
+    <div class="checks" style="width:100%"><b style="font-size:13px">Conceptos:</b>
+      {% for t, n in TIPOS %}<label><input type="checkbox" name="c" value="{{ t }}" {{ 'checked' if t in elegidos }}> {{ n }}</label>{% endfor %}
+    </div>
+    <label>Buscar (nombre o CUIL)<input name="q" value="{{ q }}"></label>
+    <label>Obra<select name="obra"><option value="">Todas</option>{% for o in obras %}<option {{ 'selected' if o==obra }}>{{ o }}</option>{% endfor %}</select></label>
+    <div class="checks"><label><input type="checkbox" name="todos" value="1" {{ 'checked' if not solo_deuda }}> Incluir personas sin deuda</label></div>
+    <button>Ver</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="fila no-print" style="margin-bottom:10px">
+    <button type="button" class="sec chico" onclick="marcar(true)">Marcar todos</button>
+    <button type="button" class="sec chico" onclick="marcar(false)">Desmarcar todos</button>
+    <span class="mut peq" id="cuenta"></span>
+    <span style="flex:1"></span>
+    <button type="button" onclick="window.print()">🖨 Imprimir marcados</button>
+  </div>
+  <table class="ajustar" id="tabla">
+    <thead><tr><th class="no-print" style="width:30px"></th><th>Apellido y nombre</th><th>CUIL</th><th>Obra</th>
+      {% for t in elegidos %}<th class="num">{{ TIPOS_NOMBRE[t] }}</th>{% endfor %}<th class="num">Total adeudado</th></tr></thead>
+    <tbody>
+    {% for f in filas %}
+    <tr data-total="{{ f.total }}" {% for t in elegidos %}data-{{ t|lower }}="{{ f.r[t].deuda }}" {% endfor %}>
+      <td class="no-print"><input type="checkbox" class="sel" checked onchange="recalcular()"></td>
+      <td><a href="/personal/{{ f.p.id }}?{% for t in elegidos %}c={{ t }}{{ '&' if not loop.last }}{% endfor %}" target="_blank">{{ f.p.nombre }}</a></td>
+      <td class="mut">{{ f.p.cuil or '' }}</td><td>{{ f.p.obra or '' }}</td>
+      {% for t in elegidos %}{% set r = f.r[t] %}
+      <td class="num">{% if r.n_pend %}{{ r.deuda|pesos if r.deuda else '' }}{% if r.sin_monto %}<div class="mut peq">{{ r.sin_monto }} sin monto</div>{% endif %}{% elif r.n %}<span class="mut peq">pagado</span>{% else %}<span class="mut">—</span>{% endif %}</td>
+      {% endfor %}
+      <td class="num"><b>{{ f.total|pesos }}</b></td>
+    </tr>
+    {% else %}<tr><td colspan="{{ 5 + elegidos|length }}" class="mut">Nadie con deuda en esos conceptos.</td></tr>{% endfor %}
+    </tbody>
+    <tfoot><tr><th class="no-print"></th><th colspan="3">Total (<span id="n-sel"></span> personas)</th>
+      {% for t in elegidos %}<th class="num" id="tot-{{ t|lower }}"></th>{% endfor %}<th class="num" id="tot-total"></th></tr></tfoot>
+  </table>
+</div>
+{% endblock %}
+{% block js %}
+<script>
+const conceptos = [{% for t in elegidos %}'{{ t|lower }}',{% endfor %}'total'];
+const pesos = v => '$ ' + v.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+function recalcular(){
+  const tot = {}; conceptos.forEach(c => tot[c] = 0); let n = 0;
+  document.querySelectorAll('#tabla tbody tr[data-total]').forEach(tr => {
+    const on = tr.querySelector('.sel').checked;
+    tr.classList.toggle('fuera', !on);
+    if (!on) return; n++;
+    conceptos.forEach(c => tot[c] += parseFloat(tr.dataset[c]) || 0);
+  });
+  conceptos.forEach(c => document.getElementById('tot-' + c).textContent = pesos(tot[c]));
+  document.getElementById('n-sel').textContent = n;
+  document.getElementById('cuenta').textContent = n + ' marcadas para imprimir';
+}
+function marcar(v){ document.querySelectorAll('.sel').forEach(x => x.checked = v); recalcular(); }
+recalcular();
+</script>
+{% endblock %}

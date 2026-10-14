@@ -1,0 +1,31 @@
+LIQUIDACIONES Y FONDOS — SIDERA
+================================
+
+PUESTA EN MARCHA
+1. Doble clic en INICIAR.bat. Se abre el navegador en http://127.0.0.1:5002
+   (mientras la ventana negra esté abierta, el sistema funciona).
+2. La primera vez importa solo la planilla datos_iniciales.xlsx (el Excel que se
+   usaba hasta ahora). Después de eso el Excel ya no se usa: todo queda en datos.db.
+
+PESTAÑAS
+- Resumen: cuánto se debe y cuánto se pagó, con gráficos de torta (en pesos y en
+  cantidad de conceptos), totales por concepto, por obra y las mayores deudas.
+- Pagos y comprobantes: la misma planilla de siempre. Tocá un concepto para cargar
+  el monto, marcarlo pagado (con fecha) o subir el comprobante. La columna
+  Comprobantes tiene un botón por concepto: "⬆" para subir, "📄" para verlo.
+  Botón "Exportar a Excel" para sacar la planilla actualizada.
+- Cargar aguinaldos y fondos: para cargar lo que se le debe a cada persona
+  (aguinaldo, FCL, liquidación, bonos) aparte de los pagos, y completar rápido
+  los montos que faltan ("Solo los que no tienen monto").
+- Personal: alta y edición de personas (CUIL, fecha de baja, obra, cuentas,
+  telegrama). Desde la ficha de cada persona se ven y editan todos sus conceptos.
+
+CÓMO SE IMPORTÓ EL EXCEL
+- Celda vacía: no se creó el concepto (se carga cuando haya datos).
+- "PAGADO" sin importe: pagado, sin monto (se puede completar después).
+- Un importe: pagado si ESTADO TOTAL decía PAGADO; si no, pendiente.
+- "NO PAGADO", "FLF" o "en recibo de liquidacion": pendiente sin monto, con el texto como nota.
+- El Estado total ahora se calcula solo: NO PAGADO si queda algún concepto pendiente.
+
+RESPALDO
+Copiar datos.db y la carpeta comprobantes\ (ahí quedan todos los archivos subidos).

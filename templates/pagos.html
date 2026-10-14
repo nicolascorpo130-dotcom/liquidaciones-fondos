@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_macros.html" import celda, comprobantes, estado as est with context %}
+{% block cuerpo %}
+<h1>Pagos y comprobantes</h1>
+<div class="card">
+  <form class="fila" method="get">
+    <label>Buscar (nombre o CUIL)<input name="q" value="{{ q }}" autofocus></label>
+    <label>Obra<select name="obra"><option value="">Todas</option>{% for o in obras %}<option {{ 'selected' if o==obra }}>{{ o }}</option>{% endfor %}</select></label>
+    <label>Estado total<select name="estado"><option value="">Todos</option>
+      {% for e in ['NO PAGADO','PAGADO','SIN CARGAR'] %}<option {{ 'selected' if e==estado }}>{{ e }}</option>{% endfor %}</select></label>
+    <button>Filtrar</button>
+    <a class="btn sec" href="/exportar?{{ request.query_string.decode() }}">Exportar a Excel</a>
+    <span class="mut peq" style="margin-left:auto">{{ personas|length }} personas · tocá un nombre o un concepto para abrir la ficha en una ventana nueva</span>
+  </form>
+</div>
+<div class="card" style="padding:0">
+<table class="grilla">
+  <colgroup><col style="width:21%">{% for t, n in TIPOS %}<col style="width:13%">{% endfor %}<col style="width:9%"><col style="width:10%"><col style="width:8%"></colgroup>
+  <thead><tr><th>Apellido y nombre</th>
+    {% for t, n in TIPOS %}<th>{{ TIPOS_CORTO[t] if t != 'FCL' else 'Fondo (FCL)' }}</th>{% endfor %}
+    <th>Estado total</th><th>Obra</th><th>Comprobantes</th></tr></thead>
+  <tbody>
+  {% for p in personas %}
+  <tr>
+    <td><a href="/personal/{{ p.id }}" target="_blank">{{ p.nombre }}</a>
+      <div class="mut peq">{{ p.cuil or 'sin CUIL' }}{% if p.fecha_baja %} · baja {{ p.fecha_baja|fecha }}{% endif %}</div></td>
+    {% for t, n in TIPOS %}<td>{{ celda(p, t) }}</td>{% endfor %}
+    <td>{{ est(p.estado_total) }}</td>
+    <td class="peq">{{ p.obra or '' }}</td>
+    <td>{{ comprobantes(p) }}</td>
+  </tr>
+  {% else %}<tr><td colspan="8" class="mut">No hay personas con ese filtro.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

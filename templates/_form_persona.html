@@ -1,0 +1,15 @@
+{% set e = p if p is defined else {} %}
+<form class="fila" method="post" action="/personal/guardar">
+  <input type="hidden" name="id" value="{{ e.id or '' }}">
+  <input type="hidden" name="next" value="{{ request.full_path }}">
+  <label>CUIL<input name="cuil" value="{{ e.cuil or '' }}" placeholder="20123456789" style="width:140px"></label>
+  <label style="min-width:260px">Apellido y nombre *<input name="nombre" value="{{ e.nombre or '' }}" required></label>
+  <label>Fecha de baja<input type="date" name="fecha_baja" value="{{ e.fecha_baja or '' }}"></label>
+  <label>Obra<input name="obra" list="lista-obras" value="{{ e.obra or '' }}"></label>
+  <datalist id="lista-obras">{% for o in obras %}<option value="{{ o }}">{% endfor %}</datalist>
+  <label>Cuenta sueldo<input name="cuenta_sueldo" value="{{ e.cuenta_sueldo or '' }}"></label>
+  <label>Cuenta fondo<input name="cuenta_fondo" value="{{ e.cuenta_fondo or '' }}"></label>
+  <label>Telegrama<select name="telegrama"><option value="">—</option>{% for v in ['SI','NO'] %}<option {{ 'selected' if e.telegrama==v }}>{{ v }}</option>{% endfor %}</select></label>
+  <label style="flex:1;min-width:200px">Notas<input name="notas" value="{{ e.notas or '' }}"></label>
+  <button>{{ 'Guardar cambios' if e.id else 'Registrar' }}</button>
+</form>

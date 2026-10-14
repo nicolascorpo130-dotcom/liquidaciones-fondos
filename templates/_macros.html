@@ -1,0 +1,24 @@
+{% macro datos(it, p) -%}
+data-id="{{ it.id if it else '' }}" data-pid="{{ p.id }}" data-nombre="{{ p.nombre }}"
+data-tipo="{{ it.tipo }}" data-periodo="{{ it.periodo or '' }}" data-monto="{{ it.monto if it.monto is not none else '' }}"
+data-estado="{{ it.estado }}" data-fecha="{{ it.fecha_pago or '' }}" data-notas="{{ it.notas or '' }}"
+data-comp="{{ it.comprobante_nombre or '' }}"
+{%- endmacro %}
+
+{% macro celda(p, tipo) -%}
+{% set r = p.resumen[tipo] %}
+{% if r.n == 0 %}<span class="mut">—</span>
+{% else %}
+<a class="chip" target="_blank" href="/personal/{{ p.id }}?c={{ tipo }}" title="Ver {{ TIPOS_NOMBRE[tipo] }} de {{ p.nombre }}">
+  <span>{% if r.n_pend %}{{ r.deuda|pesos if r.deuda else 'sin monto' }}{% else %}{{ r.pagado|pesos if r.pagado else 'sin monto' }}{% endif %}{% if r.n > 1 %} <span class="mut">({{ r.n }})</span>{% endif %}</span>
+  {% if r.n_pend %}<span class="tag t-PENDIENTE">NO PAGADO</span>{% else %}<span class="tag t-PAGADO">PAGADO</span>{% endif %}
+</a>
+{% endif %}
+{%- endmacro %}
+
+{% macro comprobantes(p) -%}
+{% if p.lista_items %}<a class="comp {{ 'si' if p.n_comp == p.lista_items|length else 'no' }}" target="_blank" href="/personal/{{ p.id }}" title="Comprobantes cargados">📄 {{ p.n_comp }} de {{ p.lista_items|length }}</a>
+{% else %}<span class="mut peq">—</span>{% endif %}
+{%- endmacro %}
+
+{% macro estado(e) -%}<span class="tag t-{{ e.split(' ')[0] }}">{{ e }}</span>{%- endmacro %}

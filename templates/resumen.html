@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block cuerpo %}
+<h1>Resumen</h1>
+<div class="kpis">
+  <div class="kpi"><div class="v" style="color:var(--err)">{{ tot.deuda|pesos or '$ 0' }}</div><div class="l">Se debe ({{ tot.n_pend }} conceptos pendientes)</div></div>
+  <div class="kpi"><div class="v" style="color:var(--ok)">{{ tot.pagado|pesos or '$ 0' }}</div><div class="l">Ya pagado ({{ tot.n_pag }} conceptos pagados)</div></div>
+  <div class="kpi"><div class="v">{{ cuenta['NO PAGADO'] }} <span class="mut" style="font-size:15px">de {{ n_personas }}</span></div><div class="l">Personas con algo pendiente</div></div>
+  <div class="kpi"><div class="v">{{ cuenta['PAGADO'] }}</div><div class="l">Personas con todo pagado{% if cuenta['SIN CARGAR'] %} · {{ cuenta['SIN CARGAR'] }} sin conceptos{% endif %}</div></div>
+  <div class="kpi"><div class="v" style="color:var(--warn)">{{ tot.sin_monto }}</div><div class="l">Pendientes sin monto cargado · <a href="/cargar?sin_monto=1">completar</a></div></div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>Debido vs. pagado (en pesos)</h2>
+    <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+      <canvas id="torta-monto" width="240" height="240"></canvas>
+      <div class="leyenda" id="ley-monto"></div>
+    </div>
+    <p class="mut peq">Solo suma los conceptos que tienen monto cargado. Muchos pagos viejos figuran como "PAGADO" sin importe; por eso conviene mirar también el gráfico por cantidad.</p>
+  </div>
+  <div class="card">
+    <h2>Debido vs. pagado (cantidad de conceptos)</h2>
+    <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+      <canvas id="torta-cant" width="240" height="240"></canvas>
+      <div class="leyenda" id="ley-cant"></div>
+    </div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>Por concepto</h2>
+    <table class="ajustar">
+      <tr><th>Concepto</th><th class="num">Se debe</th><th class="num">Pagado</th><th class="num">Pendientes</th><th class="num">Sin monto</th></tr>
+      {% for t, n in TIPOS %}{% set d = por_tipo[t] %}
+      <tr><td><a href="/cargar?tipo={{ t }}">{{ n }}</a></td><td class="num">{{ d.deuda|pesos }}</td><td class="num">{{ d.pagado|pesos }}</td>
+        <td class="num">{{ d.n_pend }}</td><td class="num">{% if d.sin_monto %}<a href="/cargar?tipo={{ t }}&sin_monto=1">{{ d.sin_monto }}</a>{% else %}0{% endif %}</td></tr>
+      {% endfor %}
+      <tr><th>Total</th><th class="num">{{ tot.deuda|pesos }}</th><th class="num">{{ tot.pagado|pesos }}</th><th class="num">{{ tot.n_pend }}</th><th class="num">{{ tot.sin_monto }}</th></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h2>Mayores deudas por persona</h2>
+    <table class="ajustar">
+      <tr><th>Persona</th><th>Obra</th><th class="num">Se debe</th></tr>
+      {% for p in top %}<tr><td><a href="/personal/{{ p.id }}" target="_blank">{{ p.nombre }}</a></td><td class="mut">{{ p.obra or '' }}</td><td class="num">{{ p.deuda|pesos }}</td></tr>
+      {% else %}<tr><td colspan="3" class="mut">No hay deudas con monto cargado.</td></tr>{% endfor %}
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Por obra</h2>
+  <div class="scroll"><table class="ajustar">
+    <tr><th>Obra</th><th class="num">Se debe</th><th class="num">Pagado</th><th class="num">Conceptos pendientes</th></tr>
+    {% for o, d in por_obra %}<tr><td>{% if o != 'Sin obra' %}<a href="/pagos?obra={{ o|urlencode }}">{{ o }}</a>{% else %}<span class="mut">Sin obra</span>{% endif %}</td>
+      <td class="num">{{ d.deuda|pesos }}</td><td class="num">{{ d.pagado|pesos }}</td><td class="num">{{ d.n_pend }}</td></tr>{% endfor %}
+  </table></div>
+</div>
+{% endblock %}
+{% block js %}
+<script>
+function torta(id, leyId, datos, fmt){
+  const cv=document.getElementById(id), ctx=cv.getContext('2d'), r=cv.width/2, tot=datos.reduce((a,d)=>a+d.v,0);
+  let ang=-Math.PI/2;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  if(!tot){ ctx.fillStyle='#eef2f6'; ctx.beginPath(); ctx.arc(r,r,r-4,0,2*Math.PI); ctx.fill(); }
+  datos.forEach(d=>{ if(!d.v) return; const a=d.v/tot*2*Math.PI;
+    ctx.beginPath(); ctx.moveTo(r,r); ctx.arc(r,r,r-4,ang,ang+a); ctx.closePath(); ctx.fillStyle=d.c; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); ang+=a; });
+  ctx.beginPath(); ctx.arc(r,r,r*0.55,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.fillStyle='#1d2733'; ctx.font='600 15px Segoe UI, sans-serif'; ctx.textAlign='center';
+  const pag=datos[0].v; ctx.fillText(tot?Math.round(pag/tot*100)+'% pagado':'sin datos', r, r+5);
+  document.getElementById(leyId).innerHTML=datos.map(d=>
+    '<div><span class="c" style="background:'+d.c+'"></span><b>'+d.n+'</b><br><span style="margin-left:18px">'+fmt(d.v)+
+    ' <span class="mut">('+(tot?Math.round(d.v/tot*100):0)+'%)</span></span></div>').join('');
+}
+const pesos=v=>'$ '+v.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
+torta('torta-monto','ley-monto',[{n:'Pagado',v:{{ tot.pagado }},c:'#1e8e3e'},{n:'Se debe',v:{{ tot.deuda }},c:'#c0392b'}],pesos);
+torta('torta-cant','ley-cant',[{n:'Pagados',v:{{ tot.n_pag }},c:'#1e8e3e'},{n:'Pendientes',v:{{ tot.n_pend }},c:'#c0392b'}],v=>v+' conceptos');
+</script>
+{% endblock %}

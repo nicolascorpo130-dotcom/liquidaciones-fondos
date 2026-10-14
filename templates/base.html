@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liquidaciones y Fondos</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--tx:#1d2733;--mut:#6b7785;--pri:#1f4e78;--bd:#dde3ea;--ok:#1e8e3e;--warn:#b7791f;--err:#c0392b}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 "Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+header{background:var(--pri);color:#fff;display:flex;align-items:center;flex-wrap:wrap;gap:0 24px;padding:0 24px;min-height:54px}
+header b{font-size:16px;white-space:nowrap;display:flex;align-items:center;gap:10px}
+header img{height:30px;background:#fff;border-radius:4px;padding:2px 6px}
+nav{display:flex;flex-wrap:wrap;align-items:center;flex:1 1 auto;min-width:0}
+nav a{color:#cfe0f1;text-decoration:none;margin-right:20px;padding:17px 0;border-bottom:3px solid transparent;white-space:nowrap}
+nav a.on,nav a:hover{color:#fff;border-color:#fff}
+main{max-width:1600px;margin:18px auto;padding:0 18px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:18px;margin-bottom:18px}
+h1{font-size:20px;margin:0 0 14px}h2{font-size:15px;margin:0 0 12px}
+table{width:100%;border-collapse:collapse}th,td{padding:7px 9px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap;vertical-align:top}
+th{background:#eef2f6;font-weight:600;font-size:12.5px;color:#34495e;position:sticky;top:0;z-index:1}tr:hover td{background:#fafbfc}
+.num{text-align:right}.mut{color:var(--mut)}.peq{font-size:12px}
+input,select,textarea{font:inherit;padding:6px 8px;border:1px solid #c5ced8;border-radius:5px;background:#fff}
+button,.btn{font:inherit;padding:7px 14px;border-radius:5px;border:1px solid var(--pri);background:var(--pri);color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.sec,button.sec{background:#fff;color:var(--pri)}button.chico,.btn.chico{padding:3px 9px;font-size:12px}button.rojo{border-color:var(--err);background:#fff;color:var(--err)}
+.flash{padding:10px 14px;border-radius:6px;margin-bottom:14px}.flash.ok{background:#e6f4ea;color:#185c2c}.flash.error{background:#fdecea;color:#8a1f15}
+.fila{display:flex;gap:12px;flex-wrap:wrap;align-items:end}.fila label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--mut)}
+.tag{padding:2px 8px;border-radius:10px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.t-PAGADO{background:#e6f4ea;color:var(--ok)}.t-PENDIENTE,.t-NO{background:#fdecea;color:var(--err)}.t-SIN{background:#eef2f6;color:#4a5a6a}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:14px}.kpi .v{font-size:24px;font-weight:700}.kpi .l{color:var(--mut);font-size:12.5px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.scroll{overflow-x:auto}
+.chip{display:flex;align-items:center;gap:6px;border:1px solid var(--bd);background:#fff;border-radius:6px;padding:3px 7px;cursor:pointer;font:inherit;font-size:12.5px;color:var(--tx);margin:1px 0;width:100%;justify-content:space-between}
+a.chip{text-decoration:none}.chip:hover{border-color:var(--pri)}.chip.vacio{color:#a7b1bc;border-style:dashed;justify-content:center}
+.comp{display:inline-block;margin:1px 3px 1px 0;font-size:12px;padding:2px 7px;border-radius:5px;text-decoration:none;border:1px solid var(--bd);cursor:pointer;background:#fff;font-family:inherit}
+.comp.si{background:#e6f4ea;border-color:#b7dfc3;color:#185c2c}.comp.no{color:var(--pri)}
+dialog{border:none;border-radius:10px;padding:0;width:min(480px,94vw);box-shadow:0 10px 40px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(20,30,45,.45)}
+dialog form{padding:20px;display:flex;flex-direction:column;gap:10px}
+dialog label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--mut)}
+dialog .acciones{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px}
+table.ajustar td,table.ajustar th{white-space:normal}table.ajustar input{width:100%;min-width:80px}
+table.grilla{table-layout:fixed}table.grilla th,table.grilla td{white-space:normal;padding:6px 6px;overflow-wrap:anywhere}
+table.grilla .chip{flex-wrap:wrap;gap:2px 6px;padding:3px 6px}table.grilla .chip .tag{font-size:10.5px;padding:1px 6px}
+table.grilla .chip.vacio{padding:5px 6px}
+.leyenda{display:flex;flex-direction:column;gap:8px;justify-content:center}.leyenda span.c{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.solo-print{display:none}
+.checks{display:flex;gap:6px 16px;flex-wrap:wrap;align-items:center}.checks label{flex-direction:row!important;align-items:center;gap:5px;color:var(--tx)!important;font-size:14px!important;cursor:pointer}
+@media print{
+  @page{margin:12mm}
+  body{background:#fff;font-size:12px}
+  header,.no-print,.flash,dialog{display:none!important}
+  .solo-print{display:block}
+  main{margin:0;padding:0;max-width:none}
+  .card{border:none;padding:0;margin-bottom:12px}
+  .kpis{grid-template-columns:repeat(4,1fr)}.kpi{padding:8px}.kpi .v{font-size:18px}
+  a{color:inherit;text-decoration:none}
+  th{position:static;background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .tag{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  tr.fuera{display:none}
+  td,th{padding:4px 6px}
+}
+@media(max-width:768px){header{padding:8px 12px}nav{width:100%;overflow-x:auto;flex-wrap:nowrap}nav a{padding:10px 0}main{padding:0 10px}.fila{flex-direction:column;align-items:stretch}input,select{width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <b><img src="{{ url_for('static', filename='logo_sidera.png') }}" alt="">Liquidaciones y Fondos <span style="font-weight:400;font-size:12px;color:#cfe0f1">v{{ version }}</span></b>
+  <nav>
+    {% set ep = request.endpoint %}
+    <a href="/" class="{{ 'on' if ep=='resumen' }}">Resumen</a>
+    <a href="/pagos" class="{{ 'on' if ep=='pagos' }}">Pagos y comprobantes</a>
+    <a href="/deuda" class="{{ 'on' if ep=='deuda' }}">Reporte de deuda</a>
+    <a href="/cargar" class="{{ 'on' if ep=='cargar' }}">Cargar aguinaldos y fondos</a>
+    <a href="/personal" class="{{ 'on' if ep in ('personal','ficha') }}">Personal</a>
+  </nav>
+</header>
+<main>
+{% with m = get_flashed_messages(with_categories=true) %}{% for cat, txt in m %}<div class="flash {{ cat }}">{{ txt }}</div>{% endfor %}{% endwith %}
+{% block cuerpo %}{% endblock %}
+</main>
+
+<dialog id="dlg-item">
+<form method="post" action="/item/guardar" enctype="multipart/form-data">
+  <h2 id="dlg-titulo" style="margin:0"></h2>
+  <div class="mut" id="dlg-persona"></div>
+  <input type="hidden" name="id"><input type="hidden" name="personal_id"><input type="hidden" name="next">
+  <label>Concepto<select name="tipo">{% for t, n in TIPOS %}<option value="{{ t }}">{{ n }}</option>{% endfor %}</select></label>
+  <label>Período / detalle (opcional)<input name="periodo" placeholder="ej. 1° SAC 2026, bono marzo"></label>
+  <label>Monto ($) — dejalo vacío si todavía no lo sabés<input name="monto" inputmode="decimal" placeholder="ej. 626124,50"></label>
+  <div class="fila">
+    <label style="flex:1">Estado<select name="estado"><option value="PENDIENTE">No pagado (se debe)</option><option value="PAGADO">Pagado</option></select></label>
+    <label style="flex:1">Fecha de pago<input type="date" name="fecha_pago"></label>
+  </div>
+  <label>Comprobante de pago (PDF o imagen)<input type="file" name="comprobante" accept=".pdf,.png,.jpg,.jpeg,.webp"></label>
+  <div id="dlg-comp" class="peq"></div>
+  <label>Notas<textarea name="notas" rows="2"></textarea></label>
+  <div class="acciones">
+    <button type="submit" class="rojo" id="dlg-borrar" formnovalidate onclick="return confirm('¿Eliminar este concepto?')">Eliminar</button>
+    <span style="flex:1"></span>
+    <button type="button" class="sec" onclick="this.closest('dialog').close()">Cancelar</button>
+    <button type="submit">Guardar</button>
+  </div>
+</form>
+</dialog>
+
+<script>
+function fmtMonto(v){ if(v===''||v==null) return ''; return Number(v).toFixed(2).replace('.', ','); }
+function abrirItem(b, conArchivo){
+  const d=b.dataset, dlg=document.getElementById('dlg-item'), fo=dlg.querySelector('form'), f=fo.elements;
+  fo.reset();
+  f['id'].value=d.id||''; f.personal_id.value=d.pid||''; f.next.value=location.pathname+location.search;
+  f.tipo.value=d.tipo; f.periodo.value=d.periodo||''; f.monto.value=fmtMonto(d.monto);
+  f.estado.value=d.estado||'PENDIENTE'; f.fecha_pago.value=d.fecha||''; f.notas.value=d.notas||'';
+  document.getElementById('dlg-titulo').textContent=(d.id?'':'Nuevo: ')+f.tipo.options[f.tipo.selectedIndex].text;
+  document.getElementById('dlg-persona').textContent=d.nombre||'';
+  const c=document.getElementById('dlg-comp'), borrar=document.getElementById('dlg-borrar');
+  c.innerHTML='';
+  if(d.comp){
+    c.innerHTML='Comprobante actual: <a target="_blank" href="/comprobante/'+d.id+'"></a> '+
+      '<button class="chico rojo" type="submit" formaction="/item/'+d.id+'/quitar_comprobante" formnovalidate onclick="return confirm(\'¿Quitar el comprobante?\')">Quitar</button>'+
+      '<br><span class="mut">Si subís otro, reemplaza al actual.</span>';
+    c.querySelector('a').textContent=d.comp;
+  }
+  borrar.style.display=d.id?'':'none';
+  if(d.id) borrar.setAttribute('formaction','/item/'+d.id+'/borrar');
+  dlg.showModal();
+  if(conArchivo) f.comprobante.click(); else f.monto.focus();
+}
+document.addEventListener('change',e=>{
+  if(e.target.name==='comprobante' && e.target.files.length){
+    const f=e.target.form; if(f.estado.value!=='PAGADO'){f.estado.value='PAGADO';}
+    if(!f.fecha_pago.value) f.fecha_pago.value='{{ hoy }}';
+  }
+  if(e.target.name==='estado' && e.target.closest('#dlg-item') && e.target.value==='PAGADO' && !e.target.form.fecha_pago.value){
+    e.target.form.fecha_pago.value='{{ hoy }}';
+  }
+});
+</script>
+{% block js %}{% endblock %}
+</body>
+</html>

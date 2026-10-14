@@ -1,0 +1,6 @@
+datos.db
+comprobantes/
+__pycache__/
+*.pyc
+datos_iniciales.xlsx
+*.xlsx

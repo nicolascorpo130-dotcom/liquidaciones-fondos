@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_macros.html" import datos, estado as est with context %}
+{% block cuerpo %}
+<div class="solo-print" style="margin-bottom:10px">
+  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1f4e78;padding-bottom:6px;margin-bottom:8px">
+    <img src="{{ url_for('static', filename='logo_sidera.png') }}" alt="" style="height:34px">
+    <div style="text-align:right"><b>Estado de cuenta</b><br><span class="mut">Impreso el {{ ahora.strftime('%d/%m/%Y %H:%M') }}</span></div>
+  </div>
+  <div><b style="font-size:16px">{{ p.nombre }}</b> · CUIL {{ p.cuil or '—' }}{% if p.obra %} · Obra {{ p.obra }}{% endif %}{% if p.fecha_baja %} · Baja {{ p.fecha_baja|fecha }}{% endif %}</div>
+  <div class="mut">Conceptos: {% for t in elegidos %}{{ TIPOS_NOMBRE[t] }}{{ ', ' if not loop.last }}{% endfor %}</div>
+</div>
+
+<div class="no-print">
+  <h1 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">{{ p.nombre }} {{ est(p.estado_total) }}</h1>
+  <p class="mut" style="margin-top:-8px">CUIL {{ p.cuil or '—' }}{% if p.obra %} · {{ p.obra }}{% endif %}{% if p.fecha_baja %} · baja {{ p.fecha_baja|fecha }}{% endif %}</p>
+  <div class="card">
+    <form method="get" class="fila" id="f-conceptos">
+      <div class="checks"><b style="font-size:13px">Mostrar:</b>
+        {% for t, n in TIPOS %}<label><input type="checkbox" name="c" value="{{ t }}" {{ 'checked' if t in elegidos }} onchange="this.form.submit()"> {{ n }}{% if p.resumen[t].n %} <span class="mut">({{ p.resumen[t].n }})</span>{% endif %}</label>{% endfor %}
+      </div>
+      <span style="flex:1"></span>
+      <button type="button" onclick="window.print()">🖨 Imprimir</button>
+    </form>
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="v" style="color:var(--err)">{{ deuda|pesos }}</div><div class="l">Se le debe</div></div>
+  <div class="kpi"><div class="v" style="color:var(--ok)">{{ pagado|pesos }}</div><div class="l">Ya se le pagó</div></div>
+</div>
+
+<div class="card">
+  <div class="fila no-print" style="justify-content:space-between;margin-bottom:10px"><h2 style="margin:0">Conceptos</h2>
+    <span>{% for t, n in TIPOS %}<button type="button" class="sec chico" onclick="abrirItem(this)" data-pid="{{ p.id }}" data-nombre="{{ p.nombre }}" data-tipo="{{ t }}">+ {{ TIPOS_CORTO[t] }}</button> {% endfor %}</span></div>
+  <table class="ajustar">
+    <tr><th>Concepto</th><th>Período / detalle</th><th class="num">Monto</th><th>Estado</th><th>Fecha de pago</th><th class="no-print">Comprobante</th><th>Notas</th><th class="no-print"></th></tr>
+    {% for it in items %}
+    <tr><td>{{ TIPOS_NOMBRE[it.tipo] }}</td><td>{{ it.periodo or '' }}</td>
+      <td class="num">{% if it.monto is not none %}{{ it.monto|pesos }}{% else %}<span class="mut">sin monto</span>{% endif %}</td>
+      <td><span class="tag t-{{ it.estado }}">{{ 'PAGADO' if it.estado=='PAGADO' else 'NO PAGADO' }}</span></td>
+      <td>{{ it.fecha_pago|fecha }}</td>
+      <td class="no-print">{% if it.comprobante %}<a class="comp si" target="_blank" href="/comprobante/{{ it.id }}">📄 Ver</a>{% else %}<button type="button" class="comp no" onclick="abrirItem(this, true)" {{ datos(it, p) }}>⬆ Subir</button>{% endif %}</td>
+      <td class="mut peq">{{ it.notas or '' }}</td>
+      <td class="no-print"><button type="button" class="sec chico" onclick="abrirItem(this)" {{ datos(it, p) }}>Editar</button></td></tr>
+    {% else %}<tr><td colspan="8" class="mut">No tiene conceptos cargados de los tipos elegidos.</td></tr>{% endfor %}
+    {% if items %}<tr><th colspan="2">Total</th><th class="num">{{ (deuda + pagado)|pesos }}</th><th colspan="5" class="peq">Se debe {{ deuda|pesos }} · Pagado {{ pagado|pesos }}</th></tr>{% endif %}
+  </table>
+</div>
+
+<div class="card no-print">
+  <h2>Datos personales</h2>
+  {% include "_form_persona.html" %}
+  <form method="post" action="/personal/{{ p.id }}/borrar" style="margin-top:14px" onsubmit="return confirm('¿Eliminar a {{ p.nombre }} con todos sus conceptos y comprobantes?')">
+    <button class="rojo chico">Eliminar persona</button></form>
+</div>
+{% endblock %}
