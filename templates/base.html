@@ -3,38 +3,42 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Liquidaciones y Fondos</title>
+<script>try{if(localStorage.getItem('tema')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}</script>
 <style>
-:root{--bg:#f4f6f9;--card:#fff;--tx:#1d2733;--mut:#6b7785;--pri:#1f4e78;--bd:#dde3ea;--ok:#1e8e3e;--warn:#b7791f;--err:#c0392b}
+:root{--bg:#f4f6f9;--card:#fff;--tx:#1d2733;--mut:#6b7785;--pri:#1f4e78;--bd:#dde3ea;--ok:#1e8e3e;--warn:#b7791f;--err:#c0392b;--th:#eef2f6;--thtx:#34495e;--hover:#fafbfc;--in:#fff;--inbd:#c5ced8;--okbg:#e6f4ea;--oktx:#185c2c;--errbg:#fdecea;--errtx:#8a1f15;--sinbg:#eef2f6;--sintx:#4a5a6a;--link:#1a56a8;--vacio:#a7b1bc;--comp-bd:#b7dfc3;color-scheme:light}
+:root[data-theme=dark]{--bg:#12171d;--card:#1b222b;--tx:#e3e8ee;--mut:#97a3b0;--pri:#3d7cc0;--bd:#2c3642;--ok:#4cc276;--warn:#e0a84a;--err:#ef6b5c;--th:#232c37;--thtx:#c9d3de;--hover:#212a34;--in:#141a21;--inbd:#3a4654;--okbg:#173524;--oktx:#7fdc9f;--errbg:#3d1d1a;--errtx:#f5a399;--sinbg:#2a333e;--sintx:#b6c0cb;--link:#7db4ef;--vacio:#5d6977;--comp-bd:#2c5a3c;color-scheme:dark}
+a{color:var(--link)}
 *{box-sizing:border-box}body{margin:0;font:14px/1.45 "Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--tx)}
-header{background:var(--pri);color:#fff;display:flex;align-items:center;flex-wrap:wrap;gap:0 24px;padding:0 24px;min-height:54px}
+header{background:#1f4e78;color:#fff;display:flex;align-items:center;flex-wrap:wrap;gap:0 24px;padding:0 24px;min-height:54px}
 header b{font-size:16px;white-space:nowrap;display:flex;align-items:center;gap:10px}
 header img{height:30px;background:#fff;border-radius:4px;padding:2px 6px}
 nav{display:flex;flex-wrap:wrap;align-items:center;flex:1 1 auto;min-width:0}
 nav a{color:#cfe0f1;text-decoration:none;margin-right:20px;padding:17px 0;border-bottom:3px solid transparent;white-space:nowrap}
 nav a.on,nav a:hover{color:#fff;border-color:#fff}
+header .tema{background:transparent;border:1px solid #5b86ab;color:#fff;padding:2px 9px;font-size:12.5px;border-radius:12px;margin-right:6px}
 header .cuenta{margin-left:auto;font-size:12.5px;color:#cfe0f1;white-space:nowrap}header .cuenta a{color:#fff}
 main{max-width:1600px;margin:18px auto;padding:0 18px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:18px;margin-bottom:18px}
 h1{font-size:20px;margin:0 0 14px}h2{font-size:15px;margin:0 0 12px}
 table{width:100%;border-collapse:collapse}th,td{padding:7px 9px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap;vertical-align:top}
-th{background:#eef2f6;font-weight:600;font-size:12.5px;color:#34495e;position:sticky;top:0;z-index:1}tr:hover td{background:#fafbfc}
+th{background:var(--th);font-weight:600;font-size:12.5px;color:var(--thtx);position:sticky;top:0;z-index:1}tr:hover td{background:var(--hover)}
 .num{text-align:right}.mut{color:var(--mut)}.peq{font-size:12px}
-input,select,textarea{font:inherit;padding:6px 8px;border:1px solid #c5ced8;border-radius:5px;background:#fff}
+input,select,textarea{font:inherit;padding:6px 8px;border:1px solid var(--inbd);border-radius:5px;background:var(--in);color:var(--tx)}
 button,.btn{font:inherit;padding:7px 14px;border-radius:5px;border:1px solid var(--pri);background:var(--pri);color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
-.btn.sec,button.sec{background:#fff;color:var(--pri)}button.chico,.btn.chico{padding:3px 9px;font-size:12px}button.rojo{border-color:var(--err);background:#fff;color:var(--err)}
-.flash{padding:10px 14px;border-radius:6px;margin-bottom:14px}.flash.ok{background:#e6f4ea;color:#185c2c}.flash.error{background:#fdecea;color:#8a1f15}
+.btn.sec,button.sec{background:var(--card);color:var(--pri)}button.chico,.btn.chico{padding:3px 9px;font-size:12px}button.rojo{border-color:var(--err);background:var(--card);color:var(--err)}
+.flash{padding:10px 14px;border-radius:6px;margin-bottom:14px}.flash.ok{background:var(--okbg);color:var(--oktx)}.flash.error{background:var(--errbg);color:var(--errtx)}
 .fila{display:flex;gap:12px;flex-wrap:wrap;align-items:end}.fila label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--mut)}
 .tag{padding:2px 8px;border-radius:10px;font-size:11.5px;font-weight:600;white-space:nowrap}
-.t-PAGADO{background:#e6f4ea;color:var(--ok)}.t-PENDIENTE,.t-NO{background:#fdecea;color:var(--err)}.t-SIN{background:#eef2f6;color:#4a5a6a}
+.t-PAGADO{background:var(--okbg);color:var(--ok)}.t-PENDIENTE,.t-NO{background:var(--errbg);color:var(--err)}.t-SIN{background:var(--sinbg);color:var(--sintx)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px}
-.kpi{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:14px}.kpi .v{font-size:24px;font-weight:700}.kpi .l{color:var(--mut);font-size:12.5px}
+.kpi{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:14px}.kpi .v{font-size:24px;font-weight:700}.kpi .l{color:var(--mut);font-size:12.5px}
 .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}@media(max-width:900px){.grid2{grid-template-columns:1fr}}
 .scroll{overflow-x:auto}
-.chip{display:flex;align-items:center;gap:6px;border:1px solid var(--bd);background:#fff;border-radius:6px;padding:3px 7px;cursor:pointer;font:inherit;font-size:12.5px;color:var(--tx);margin:1px 0;width:100%;justify-content:space-between}
-a.chip{text-decoration:none}.chip:hover{border-color:var(--pri)}.chip.vacio{color:#a7b1bc;border-style:dashed;justify-content:center}
-.comp{display:inline-block;margin:1px 3px 1px 0;font-size:12px;padding:2px 7px;border-radius:5px;text-decoration:none;border:1px solid var(--bd);cursor:pointer;background:#fff;font-family:inherit}
-.comp.si{background:#e6f4ea;border-color:#b7dfc3;color:#185c2c}.comp.no{color:var(--pri)}
-dialog{border:none;border-radius:10px;padding:0;width:min(480px,94vw);box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.chip{display:flex;align-items:center;gap:6px;border:1px solid var(--bd);background:var(--card);border-radius:6px;padding:3px 7px;cursor:pointer;font:inherit;font-size:12.5px;color:var(--tx);margin:1px 0;width:100%;justify-content:space-between}
+a.chip{text-decoration:none}.chip:hover{border-color:var(--pri)}.chip.vacio{color:var(--vacio);border-style:dashed;justify-content:center}
+.comp{display:inline-block;margin:1px 3px 1px 0;font-size:12px;padding:2px 7px;border-radius:5px;text-decoration:none;border:1px solid var(--bd);cursor:pointer;background:var(--card);font-family:inherit}
+.comp.si{background:var(--okbg);border-color:var(--comp-bd);color:var(--oktx)}.comp.no{color:var(--pri)}
+dialog{background:var(--card);color:var(--tx);border:none;border-radius:10px;padding:0;width:min(480px,94vw);box-shadow:0 10px 40px rgba(0,0,0,.25)}
 dialog::backdrop{background:rgba(20,30,45,.45)}
 dialog form{padding:20px;display:flex;flex-direction:column;gap:10px}
 dialog label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--mut)}
@@ -47,6 +51,7 @@ table.grilla .chip.vacio{padding:5px 6px}
 .solo-print{display:none}
 .checks{display:flex;gap:6px 16px;flex-wrap:wrap;align-items:center}.checks label{flex-direction:row!important;align-items:center;gap:5px;color:var(--tx)!important;font-size:14px!important;cursor:pointer}
 @media print{
+  :root,:root[data-theme=dark]{--bg:#f4f6f9;--card:#fff;--tx:#1d2733;--mut:#6b7785;--pri:#1f4e78;--bd:#dde3ea;--ok:#1e8e3e;--warn:#b7791f;--err:#c0392b;--th:#eef2f6;--thtx:#34495e;--hover:#fafbfc;--in:#fff;--inbd:#c5ced8;--okbg:#e6f4ea;--oktx:#185c2c;--errbg:#fdecea;--errtx:#8a1f15;--sinbg:#eef2f6;--sintx:#4a5a6a;--link:#1a56a8;--vacio:#a7b1bc;--comp-bd:#b7dfc3;color-scheme:light}
   @page{margin:12mm}
   body{background:#fff;font-size:12px}
   header,.no-print,.flash,dialog{display:none!important}
@@ -76,7 +81,7 @@ table.grilla .chip.vacio{padding:5px 6px}
     <a href="/personal" class="{{ 'on' if ep in ('personal','ficha') }}">Personal</a>
     {% if usuario_actual.es_admin %}<a href="/usuarios" class="{{ 'on' if ep=='usuarios' }}">Usuarios</a>{% endif %}
   </nav>
-  <div class="cuenta">👤 {{ usuario_actual.nombre or usuario_actual.usuario }} · <a href="/mi-clave">Cambiar contraseña</a> · <a href="/salir">Salir</a></div>
+  <div class="cuenta"><button type="button" class="tema" onclick="cambiarTema()" title="Cambiar entre tema claro y oscuro"></button> 👤 {{ usuario_actual.nombre or usuario_actual.usuario }} · <a href="/mi-clave">Cambiar contraseña</a> · <a href="/salir">Salir</a></div>
   {% endif %}
 </header>
 <main>
@@ -109,6 +114,12 @@ table.grilla .chip.vacio{padding:5px 6px}
 </dialog>
 
 <script>
+function pintarTema(){ const o=document.documentElement.dataset.theme==='dark'; document.querySelectorAll('.tema').forEach(x=>x.textContent=o?'☀️ Claro':'🌙 Oscuro'); }
+function cambiarTema(){ const o=document.documentElement.dataset.theme!=='dark';
+  if(o) document.documentElement.dataset.theme='dark'; else delete document.documentElement.dataset.theme;
+  try{localStorage.setItem('tema',o?'dark':'light')}catch(e){}
+  pintarTema(); if(window.alCambiarTema) window.alCambiarTema(); }
+pintarTema();
 function fmtMonto(v){ if(v===''||v==null) return ''; return Number(v).toFixed(2).replace('.', ','); }
 function abrirItem(b, conArchivo){
   const d=b.dataset, dlg=document.getElementById('dlg-item'), fo=dlg.querySelector('form'), f=fo.elements;

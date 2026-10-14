@@ -61,22 +61,26 @@
 {% block js %}
 <script>
 function torta(id, leyId, datos, fmt){
+  const cs=getComputedStyle(document.documentElement), fondo=cs.getPropertyValue('--card').trim(), texto=cs.getPropertyValue('--tx').trim(), vacio=cs.getPropertyValue('--th').trim();
   const cv=document.getElementById(id), ctx=cv.getContext('2d'), r=cv.width/2, tot=datos.reduce((a,d)=>a+d.v,0);
   let ang=-Math.PI/2;
   ctx.clearRect(0,0,cv.width,cv.height);
-  if(!tot){ ctx.fillStyle='#eef2f6'; ctx.beginPath(); ctx.arc(r,r,r-4,0,2*Math.PI); ctx.fill(); }
+  if(!tot){ ctx.fillStyle=vacio; ctx.beginPath(); ctx.arc(r,r,r-4,0,2*Math.PI); ctx.fill(); }
   datos.forEach(d=>{ if(!d.v) return; const a=d.v/tot*2*Math.PI;
     ctx.beginPath(); ctx.moveTo(r,r); ctx.arc(r,r,r-4,ang,ang+a); ctx.closePath(); ctx.fillStyle=d.c; ctx.fill();
-    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); ang+=a; });
-  ctx.beginPath(); ctx.arc(r,r,r*0.55,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill();
-  ctx.fillStyle='#1d2733'; ctx.font='600 15px Segoe UI, sans-serif'; ctx.textAlign='center';
+    ctx.strokeStyle=fondo; ctx.lineWidth=2; ctx.stroke(); ang+=a; });
+  ctx.beginPath(); ctx.arc(r,r,r*0.55,0,2*Math.PI); ctx.fillStyle=fondo; ctx.fill();
+  ctx.fillStyle=texto; ctx.font='600 15px Segoe UI, sans-serif'; ctx.textAlign='center';
   const pag=datos[0].v; ctx.fillText(tot?Math.round(pag/tot*100)+'% pagado':'sin datos', r, r+5);
   document.getElementById(leyId).innerHTML=datos.map(d=>
     '<div><span class="c" style="background:'+d.c+'"></span><b>'+d.n+'</b><br><span style="margin-left:18px">'+fmt(d.v)+
     ' <span class="mut">('+(tot?Math.round(d.v/tot*100):0)+'%)</span></span></div>').join('');
 }
 const pesos=v=>'$ '+v.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
+function dibujar(){
 torta('torta-monto','ley-monto',[{n:'Pagado',v:{{ tot.pagado }},c:'#1e8e3e'},{n:'Se debe',v:{{ tot.deuda }},c:'#c0392b'}],pesos);
 torta('torta-cant','ley-cant',[{n:'Pagados',v:{{ tot.n_pag }},c:'#1e8e3e'},{n:'Pendientes',v:{{ tot.n_pend }},c:'#c0392b'}],v=>v+' conceptos');
+}
+dibujar(); window.alCambiarTema=dibujar;
 </script>
 {% endblock %}

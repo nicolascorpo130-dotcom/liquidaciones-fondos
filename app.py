@@ -20,7 +20,7 @@ from werkzeug.utils import secure_filename
 
 import db
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 PUERTO = 5002
 EXTENSIONES = {".pdf", ".png", ".jpg", ".jpeg", ".webp"}
 
