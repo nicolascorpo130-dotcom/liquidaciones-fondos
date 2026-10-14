@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block cuerpo %}
+<h1>Usuarios</h1>
+<div class="card">
+  <h2>Nuevo usuario</h2>
+  <form class="fila" method="post" action="/usuarios/guardar">
+    <label>Usuario *<input name="usuario" required autocomplete="off"></label>
+    <label>Nombre<input name="nombre"></label>
+    <label>Contraseña * (mínimo 6)<input type="password" name="clave" required autocomplete="new-password"></label>
+    <label>Repetir contraseña *<input type="password" name="clave2" required autocomplete="new-password"></label>
+    <div class="checks"><label><input type="checkbox" name="es_admin" value="1"> Administrador</label></div>
+    <button>Crear usuario</button>
+  </form>
+  <p class="mut peq" style="margin:10px 0 0">Los administradores además pueden crear, editar y borrar usuarios.</p>
+</div>
+<div class="card">
+  <table class="ajustar">
+    <tr><th>Usuario</th><th>Nombre</th><th>Tipo</th><th>Estado</th><th>Último ingreso</th><th></th></tr>
+    {% for u in lista %}
+    <tr>
+      <td><b>{{ u.usuario }}</b>{% if u.id == usuario_actual.id %} <span class="mut peq">(vos)</span>{% endif %}</td>
+      <td>{{ u.nombre or '' }}</td>
+      <td>{{ 'Administrador' if u.es_admin else 'Usuario' }}</td>
+      <td><span class="tag {{ 't-PAGADO' if u.activo else 't-SIN' }}">{{ 'Activo' if u.activo else 'Desactivado' }}</span></td>
+      <td class="mut">{{ u.ultimo_ingreso or 'nunca' }}</td>
+      <td><button type="button" class="sec chico" onclick="editar(this)" data-id="{{ u.id }}" data-usuario="{{ u.usuario }}" data-nombre="{{ u.nombre or '' }}" data-admin="{{ u.es_admin }}" data-activo="{{ u.activo }}">Editar</button>
+        {% if u.id != usuario_actual.id %}<form method="post" action="/usuarios/{{ u.id }}/borrar" style="display:inline" onsubmit="return confirm('¿Borrar el usuario {{ u.usuario }}?')"><button class="rojo chico">Borrar</button></form>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<dialog id="dlg-usuario">
+<form method="post" action="/usuarios/guardar">
+  <h2 style="margin:0">Editar usuario</h2>
+  <input type="hidden" name="id">
+  <label>Usuario<input name="usuario" required></label>
+  <label>Nombre<input name="nombre"></label>
+  <label>Contraseña nueva (dejala vacía para no cambiarla)<input type="password" name="clave" autocomplete="new-password"></label>
+  <label>Repetir contraseña nueva<input type="password" name="clave2" autocomplete="new-password"></label>
+  <div class="checks"><label><input type="checkbox" name="es_admin" value="1"> Administrador</label><label><input type="checkbox" name="activo" value="1"> Activo (puede ingresar)</label></div>
+  <div class="acciones"><button type="button" class="sec" onclick="this.closest('dialog').close()">Cancelar</button><button>Guardar</button></div>
+</form>
+</dialog>
+{% endblock %}
+{% block js %}
+<script>
+function editar(b){
+  const d=b.dataset, dlg=document.getElementById('dlg-usuario'), f=dlg.querySelector('form').elements;
+  dlg.querySelector('form').reset();
+  f['id'].value=d.id; f.usuario.value=d.usuario; f.nombre.value=d.nombre;
+  f.es_admin.checked=d.admin==='1'; f.activo.checked=d.activo==='1';
+  dlg.showModal();
+}
+</script>
+{% endblock %}

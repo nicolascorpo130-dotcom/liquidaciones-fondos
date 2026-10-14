@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block cuerpo %}
+<div class="card" style="max-width:380px;margin:30px auto">
+  <h1>Cambiar contraseña</h1>
+  <form method="post" style="display:flex;flex-direction:column;gap:12px">
+    <label style="display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--mut)">Contraseña actual<input type="password" name="actual" required autocomplete="current-password"></label>
+    <label style="display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--mut)">Contraseña nueva (mínimo 6)<input type="password" name="clave" required autocomplete="new-password"></label>
+    <label style="display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--mut)">Repetir contraseña nueva<input type="password" name="clave2" required autocomplete="new-password"></label>
+    <button>Guardar</button>
+  </form>
+</div>
+{% endblock %}

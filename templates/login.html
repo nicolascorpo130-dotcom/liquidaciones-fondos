@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block cuerpo %}
+<div class="card" style="max-width:380px;margin:60px auto">
+  <h1>{{ 'Crear el usuario administrador' if primer else 'Ingresar' }}</h1>
+  {% if primer %}<p class="mut">Es la primera vez que se usa el sistema con usuarios. Creá tu usuario: va a ser el administrador y desde ahí vas a poder dar de alta a los demás.</p>{% endif %}
+  <form method="post" action="{{ '/primer-usuario' if primer else '/login' }}" style="display:flex;flex-direction:column;gap:12px">
+    <input type="hidden" name="next" value="{{ next or '' }}">
+    <label class="fila" style="flex-direction:column;align-items:stretch;gap:3px;font-size:12.5px;color:var(--mut)">Usuario<input name="usuario" required autofocus autocomplete="username"></label>
+    {% if primer %}<label style="display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--mut)">Nombre (opcional)<input name="nombre"></label>{% endif %}
+    <label style="display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--mut)">Contraseña<input type="password" name="clave" required autocomplete="{{ 'new-password' if primer else 'current-password' }}"></label>
+    {% if primer %}<label style="display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--mut)">Repetir contraseña<input type="password" name="clave2" required autocomplete="new-password"></label>{% endif %}
+    <button>{{ 'Crear y entrar' if primer else 'Entrar' }}</button>
+  </form>
+  {% if not primer %}<p class="mut peq" style="margin-bottom:0">¿Te olvidaste la contraseña? Pedile a un administrador que te ponga una nueva desde Usuarios.</p>{% endif %}
+</div>
+{% endblock %}

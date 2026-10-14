@@ -12,6 +12,7 @@ header img{height:30px;background:#fff;border-radius:4px;padding:2px 6px}
 nav{display:flex;flex-wrap:wrap;align-items:center;flex:1 1 auto;min-width:0}
 nav a{color:#cfe0f1;text-decoration:none;margin-right:20px;padding:17px 0;border-bottom:3px solid transparent;white-space:nowrap}
 nav a.on,nav a:hover{color:#fff;border-color:#fff}
+header .cuenta{margin-left:auto;font-size:12.5px;color:#cfe0f1;white-space:nowrap}header .cuenta a{color:#fff}
 main{max-width:1600px;margin:18px auto;padding:0 18px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:18px;margin-bottom:18px}
 h1{font-size:20px;margin:0 0 14px}h2{font-size:15px;margin:0 0 12px}
@@ -65,6 +66,7 @@ table.grilla .chip.vacio{padding:5px 6px}
 <body>
 <header>
   <b><img src="{{ url_for('static', filename='logo_sidera.png') }}" alt="">Liquidaciones y Fondos <span style="font-weight:400;font-size:12px;color:#cfe0f1">v{{ version }}</span></b>
+  {% if usuario_actual %}
   <nav>
     {% set ep = request.endpoint %}
     <a href="/" class="{{ 'on' if ep=='resumen' }}">Resumen</a>
@@ -72,7 +74,10 @@ table.grilla .chip.vacio{padding:5px 6px}
     <a href="/deuda" class="{{ 'on' if ep=='deuda' }}">Reporte de deuda</a>
     <a href="/cargar" class="{{ 'on' if ep=='cargar' }}">Cargar aguinaldos y fondos</a>
     <a href="/personal" class="{{ 'on' if ep in ('personal','ficha') }}">Personal</a>
+    {% if usuario_actual.es_admin %}<a href="/usuarios" class="{{ 'on' if ep=='usuarios' }}">Usuarios</a>{% endif %}
   </nav>
+  <div class="cuenta">👤 {{ usuario_actual.nombre or usuario_actual.usuario }} · <a href="/mi-clave">Cambiar contraseña</a> · <a href="/salir">Salir</a></div>
+  {% endif %}
 </header>
 <main>
 {% with m = get_flashed_messages(with_categories=true) %}{% for cat, txt in m %}<div class="flash {{ cat }}">{{ txt }}</div>{% endfor %}{% endwith %}

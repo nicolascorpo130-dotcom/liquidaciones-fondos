@@ -7,6 +7,13 @@ PUESTA EN MARCHA
 2. La primera vez importa solo la planilla datos_iniciales.xlsx (el Excel que se
    usaba hasta ahora). Después de eso el Excel ya no se usa: todo queda en datos.db.
 
+USUARIOS Y CONTRASEÑAS
+- La primera vez que se abre con esta versión pide crear el usuario administrador.
+- Desde la pestaña Usuarios (solo administradores) se crean, editan, desactivan o
+  borran usuarios y se les pone una contraseña nueva si se la olvidan.
+- Cada uno puede cambiar su contraseña con "Cambiar contraseña" (arriba a la derecha).
+- Las contraseñas se guardan cifradas; nadie puede verlas, solo reemplazarlas.
+
 PESTAÑAS
 - Resumen: cuánto se debe y cuánto se pagó, con gráficos de torta (en pesos y en
   cantidad de conceptos), totales por concepto, por obra y las mayores deudas.

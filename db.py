@@ -43,6 +43,17 @@ CREATE TABLE IF NOT EXISTS items (
     creado TEXT DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS ix_items_personal ON items(personal_id);
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INTEGER PRIMARY KEY,
+    usuario TEXT UNIQUE NOT NULL COLLATE NOCASE,
+    nombre TEXT,
+    clave TEXT NOT NULL,
+    es_admin INTEGER NOT NULL DEFAULT 0,
+    activo INTEGER NOT NULL DEFAULT 1,
+    ultimo_ingreso TEXT,
+    creado TEXT DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS config (clave TEXT PRIMARY KEY, valor TEXT);
 """
 
 
@@ -62,3 +73,20 @@ def init():
 def vacia():
     with conn() as c:
         return c.execute("SELECT COUNT(*) FROM personal").fetchone()[0] == 0
+
+
+def get_config(clave):
+    with conn() as c:
+        r = c.execute("SELECT valor FROM config WHERE clave=?", (clave,)).fetchone()
+    return r[0] if r else None
+
+
+def set_config(clave, valor):
+    with conn() as c:
+        c.execute("INSERT INTO config (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor",
+                  (clave, valor))
+
+
+def hay_usuarios():
+    with conn() as c:
+        return c.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0] > 0

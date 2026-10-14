@@ -3,21 +3,24 @@ Ejecutar:  python app.py   y abrir http://127.0.0.1:5002
 """
 import io
 import os
+import secrets
 import threading
 import uuid
 import webbrowser
 from collections import defaultdict
 from datetime import date, datetime
 
-from flask import Flask, abort, flash, redirect, render_template, request, send_file, send_from_directory, url_for
+from flask import (Flask, abort, flash, g, redirect, render_template, request, send_file, send_from_directory, session,
+                   url_for)
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
+from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 import db
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 PUERTO = 5002
 EXTENSIONES = {".pdf", ".png", ".jpg", ".jpeg", ".webp"}
 
@@ -27,9 +30,161 @@ if db.vacia() and os.path.exists(os.path.join(db.BASE, "datos_iniciales.xlsx")):
     p, i = importar_excel.importar(os.path.join(db.BASE, "datos_iniciales.xlsx"))
     print(f"Primera vez: importadas {p} personas y {i} conceptos desde datos_iniciales.xlsx")
 
+if not db.get_config("secret_key"):
+    db.set_config("secret_key", secrets.token_hex(32))
+
 app = Flask(__name__)
-app.secret_key = "liquidaciones-y-fondos-local"
-app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
+app.secret_key = db.get_config("secret_key")
+app.config.update(MAX_CONTENT_LENGTH=25 * 1024 * 1024, SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax")
+
+
+# ---------------------------------------------------------------- usuarios / ingreso
+LIBRES = {"login", "primer_usuario", "static"}
+
+
+@app.before_request
+def exigir_ingreso():
+    g.usuario = None
+    if not db.hay_usuarios():
+        if request.endpoint not in ("primer_usuario", "static"):
+            return redirect(url_for("primer_usuario"))
+        return None
+    uid = session.get("uid")
+    if uid:
+        with db.conn() as c:
+            g.usuario = c.execute("SELECT * FROM usuarios WHERE id=? AND activo=1", (uid,)).fetchone()
+        if not g.usuario:
+            session.clear()
+    if not g.usuario and request.endpoint not in LIBRES:
+        return redirect(url_for("login", next=request.full_path if request.method == "GET" else None))
+    return None
+
+
+def solo_admin():
+    if not g.usuario or not g.usuario["es_admin"]:
+        abort(403)
+
+
+def _clave_valida(clave, repetida):
+    if len(clave) < 6:
+        flash("La contraseña tiene que tener al menos 6 caracteres.", "error")
+        return False
+    if clave != repetida:
+        flash("Las contraseñas no coinciden.", "error")
+        return False
+    return True
+
+
+@app.route("/primer-usuario", methods=["GET", "POST"])
+def primer_usuario():
+    if db.hay_usuarios():
+        return redirect(url_for("login"))
+    if request.method == "POST":
+        f = request.form
+        usuario = f.get("usuario", "").strip().lower()
+        if not usuario:
+            flash("Falta el nombre de usuario.", "error")
+        elif _clave_valida(f.get("clave", ""), f.get("clave2", "")):
+            with db.conn() as c:
+                uid = c.execute("INSERT INTO usuarios (usuario, nombre, clave, es_admin) VALUES (?,?,?,1)",
+                                (usuario, f.get("nombre", "").strip() or None,
+                                 generate_password_hash(f["clave"]))).lastrowid
+            session.clear()
+            session["uid"] = uid
+            flash("Usuario administrador creado. Desde Usuarios podés dar de alta a los demás.", "ok")
+            return redirect(url_for("resumen"))
+    return render_template("login.html", primer=True)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        with db.conn() as c:
+            u = c.execute("SELECT * FROM usuarios WHERE usuario=? AND activo=1",
+                          (request.form.get("usuario", "").strip(),)).fetchone()
+            if u and check_password_hash(u["clave"], request.form.get("clave", "")):
+                c.execute("UPDATE usuarios SET ultimo_ingreso=? WHERE id=?",
+                          (datetime.now().strftime("%Y-%m-%d %H:%M"), u["id"]))
+                session.clear()
+                session["uid"] = u["id"]
+                return _volver("resumen")
+        flash("Usuario o contraseña incorrectos.", "error")
+    return render_template("login.html", primer=False, next=request.args.get("next", ""))
+
+
+@app.route("/salir")
+def salir():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+@app.route("/usuarios")
+def usuarios():
+    solo_admin()
+    with db.conn() as c:
+        lista = c.execute("SELECT * FROM usuarios ORDER BY activo DESC, usuario").fetchall()
+    return render_template("usuarios.html", lista=lista)
+
+
+@app.post("/usuarios/guardar")
+def usuario_guardar():
+    solo_admin()
+    f = request.form
+    uid = f.get("id")
+    usuario = f.get("usuario", "").strip().lower()
+    es_admin = 1 if f.get("es_admin") else 0
+    activo = 1 if f.get("activo") or not uid else 0
+    if not usuario:
+        flash("Falta el nombre de usuario.", "error")
+        return redirect(url_for("usuarios"))
+    if int(uid or 0) == g.usuario["id"] and (not es_admin or not activo):
+        flash("No podés quitarte a vos mismo el permiso de administrador ni desactivarte.", "error")
+        return redirect(url_for("usuarios"))
+    clave = f.get("clave", "")
+    if (clave or not uid) and not _clave_valida(clave, f.get("clave2", "")):
+        return redirect(url_for("usuarios"))
+    with db.conn() as c:
+        otro = c.execute("SELECT id FROM usuarios WHERE usuario=? AND id<>?", (usuario, uid or 0)).fetchone()
+        if otro:
+            flash(f"Ya existe el usuario {usuario}.", "error")
+            return redirect(url_for("usuarios"))
+        if uid:
+            c.execute("UPDATE usuarios SET usuario=?, nombre=?, es_admin=?, activo=? WHERE id=?",
+                      (usuario, f.get("nombre", "").strip() or None, es_admin, activo, uid))
+            if clave:
+                c.execute("UPDATE usuarios SET clave=? WHERE id=?", (generate_password_hash(clave), uid))
+            flash(f"Usuario {usuario} actualizado.", "ok")
+        else:
+            c.execute("INSERT INTO usuarios (usuario, nombre, clave, es_admin) VALUES (?,?,?,?)",
+                      (usuario, f.get("nombre", "").strip() or None, generate_password_hash(clave), es_admin))
+            flash(f"Usuario {usuario} creado.", "ok")
+    return redirect(url_for("usuarios"))
+
+
+@app.post("/usuarios/<int:uid>/borrar")
+def usuario_borrar(uid):
+    solo_admin()
+    if uid == g.usuario["id"]:
+        flash("No podés borrar tu propio usuario.", "error")
+    else:
+        with db.conn() as c:
+            c.execute("DELETE FROM usuarios WHERE id=?", (uid,))
+        flash("Usuario eliminado.", "ok")
+    return redirect(url_for("usuarios"))
+
+
+@app.route("/mi-clave", methods=["GET", "POST"])
+def mi_clave():
+    if request.method == "POST":
+        f = request.form
+        if not check_password_hash(g.usuario["clave"], f.get("actual", "")):
+            flash("La contraseña actual no es correcta.", "error")
+        elif _clave_valida(f.get("clave", ""), f.get("clave2", "")):
+            with db.conn() as c:
+                c.execute("UPDATE usuarios SET clave=? WHERE id=?", (generate_password_hash(f["clave"]), g.usuario["id"]))
+            flash("Contraseña cambiada.", "ok")
+            return redirect(url_for("resumen"))
+    return render_template("mi_clave.html")
 
 
 # ---------------------------------------------------------------- formato
@@ -53,7 +208,7 @@ def fecha(v):
 
 @app.context_processor
 def globales():
-    return {"TIPOS": db.TIPOS, "TIPOS_CORTO": db.TIPOS_CORTO, "TIPOS_NOMBRE": db.TIPOS_NOMBRE,
+    return {"usuario_actual": g.get("usuario"), "TIPOS": db.TIPOS, "TIPOS_CORTO": db.TIPOS_CORTO, "TIPOS_NOMBRE": db.TIPOS_NOMBRE,
             "version": VERSION, "hoy": date.today().isoformat()}
 
 
